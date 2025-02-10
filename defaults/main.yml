@@ -12,3 +12,8 @@ rabbitmq_user_perm_conf: '.*'
 rabbitmq_user_perm_write: '.*'
 rabbitmq_user_perm_read: '.*'
 rabbitmq_user_tags: []
+rabbitmq_admin_pass: ''
+rabbitmq_admin_perm_conf: '.*'
+rabbitmq_admin_perm_write: '.*'
+rabbitmq_admin_perm_read: '.*'
+rabbitmq_admin_tags: []

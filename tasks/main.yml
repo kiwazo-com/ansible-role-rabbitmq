@@ -87,3 +87,67 @@
     _tags: "{{ rabbitmq_user_tags != [] }}"
   when: _defined and _tags
   changed_when: false
+
+
+
+## dedicated admin user
+- name: Create admin user
+  ansible.builtin.command: >
+    rabbitmqctl add_user
+      {{ rabbitmq_admin_name }}
+      {{ rabbitmq_admin_pass }}
+  vars:
+    _defined: "{{ rabbitmq_admin_name is defined }}"
+    _absent: "{{ rabbitmq_admin_name not in rabbitmq_users.stdout }}"
+  when: _defined and _absent
+  changed_when: false
+
+- name: Set admin pass
+  ansible.builtin.command: >
+    rabbitmqctl change_password
+      {{ rabbitmq_admin_name }}
+      {{ rabbitmq_admin_pass }}
+  when: rabbitmq_admin_name is defined
+  changed_when: false
+
+- name: DEBUG
+  debug:
+    var: rabbitmq_vhost
+
+- name: DEBUG
+  debug:
+    var: rabbitmq_admin_name
+
+- name: Configure admin
+  ansible.builtin.command: >
+    rabbitmqctl set_permissions -p
+      {{ rabbitmq_vhost }}
+      {{ rabbitmq_admin_name }}
+      '{{ rabbitmq_admin_perm_conf }}'
+      '{{ rabbitmq_admin_perm_write }}'
+      '{{ rabbitmq_admin_perm_read }}'
+  vars:
+    _vhost: "{{ rabbitmq_vhost is defined }}"
+    _user: "{{ rabbitmq_admin_name is defined }}"
+  when: _vhost and _user
+  changed_when: false
+
+- name: Set admin tags
+  ansible.builtin.command: >
+    rabbitmqctl set_user_tags
+      {{ rabbitmq_admin_name }}
+      {{ rabbitmq_admin_tags | join(' ') }}
+  vars:
+    _defined: "{{ rabbitmq_admin_name is defined }}"
+    _tags: "{{ rabbitmq_admin_tags != [] }}"
+  when: _defined and _tags
+  changed_when: false
+
+
+- name: "UFW - Allow Rabbit connections from trusted hosts"
+  community.general.ufw:
+    rule: allow
+    port: "5672,15672,25672"
+    proto: tcp
+    src: "{{item}}"
+  with_items: "{{rabbitmq_source_ips}}"
